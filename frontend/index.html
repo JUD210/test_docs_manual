@@ -3,444 +3,609 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>휴텍씨 메뉴얼 검색 시스템</title>
+  <title>휴텍씨 메뉴얼</title>
   <style>
+    :root {
+      --bg: #f4f5f7;
+      --surface: #ffffff;
+      --surface2: #f0f1f4;
+      --border: #e2e4e9;
+      --text: #1a1d27;
+      --text-dim: #6b7084;
+      --accent: #4f5bd5;
+      --accent-soft: rgba(79,91,213,0.08);
+      --accent-hover: rgba(79,91,213,0.14);
+      --orange: #e07a2f;
+      --orange-soft: rgba(224,122,47,0.08);
+      --green: #2ba89e;
+      --green-soft: rgba(43,168,158,0.08);
+      --red: #d94f4f;
+      --red-soft: rgba(217,79,79,0.08);
+      --purple: #7c5cbf;
+      --purple-soft: rgba(124,92,191,0.08);
+      --radius: 8px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+    body { font-family: -apple-system, 'Pretendard', sans-serif; background: var(--bg); color: var(--text); }
 
+    /* ── Header ── */
     .header {
-      background: #1a237e; color: white; padding: 14px 24px;
-      display: flex; align-items: center; gap: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px; border-bottom: 1px solid var(--border);
     }
-    .header h1 { font-size: 18px; font-weight: 600; }
-    .header .subtitle { font-size: 12px; opacity: 0.7; }
+    .header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+    .header .badge { font-size: 11px; color: var(--text-dim); background: var(--surface2); padding: 3px 8px; border-radius: 4px; }
 
-    .container { display: flex; height: calc(100vh - 50px); }
+    /* ── Layout ── */
+    .app { display: flex; height: calc(100vh - 45px); }
 
-    /* Sidebar */
+    /* ── Sidebar: Chip Filters ── */
     .sidebar {
-      width: 260px; background: white; border-right: 1px solid #ddd;
-      overflow-y: auto; flex-shrink: 0; font-size: 13px;
+      width: 300px; border-right: 1px solid var(--border);
+      overflow-y: auto; padding: 16px; flex-shrink: 0;
     }
-    .axis-group {
-      border-bottom: 1px solid #eee; padding: 10px 14px;
-    }
-    .axis-title {
-      font-size: 12px; font-weight: 700; color: #1a237e;
-      margin-bottom: 6px; letter-spacing: 0.5px;
-    }
-    .filter-row { margin-bottom: 4px; }
-    .filter-row label { display: block; font-size: 11px; color: #888; margin-bottom: 2px; }
-    .filter-row select {
-      width: 100%; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px;
-      font-size: 12px; background: white;
-    }
-    .filter-actions { padding: 10px 14px; }
-    .btn {
-      padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer;
-      font-size: 12px; transition: background 0.2s;
-    }
-    .btn-primary { background: #1a237e; color: white; }
-    .btn-primary:hover { background: #283593; }
-    .btn-secondary { background: #e0e0e0; color: #333; }
-    .btn-secondary:hover { background: #bdbdbd; }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* Main */
+    .axis {
+      margin-bottom: 20px;
+    }
+    .axis-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .axis-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-dim);
+    }
+    .axis-line { flex: 1; height: 1px; background: var(--border); }
+
+    .chip-group {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;
+    }
+    .chip-group-label {
+      width: 100%; font-size: 10px; color: var(--text-dim); margin-bottom: 2px; margin-top: 4px;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 20px; font-size: 12px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--text); }
+    .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+    .chip .count {
+      font-size: 10px; background: var(--surface2); padding: 1px 5px;
+      border-radius: 8px; color: var(--text-dim);
+    }
+    .chip.active .count { background: var(--accent); color: white; }
+
+    /* Active chip uses inline styles from color map */
+
+    .reset-btn {
+      width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: transparent; color: var(--text-dim); cursor: pointer; font-size: 12px;
+      transition: all 0.15s;
+    }
+    .reset-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+    /* ── Main ── */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Search Bar */
-    .search-bar {
-      padding: 12px 16px; background: white; border-bottom: 1px solid #ddd;
-      display: flex; gap: 8px;
+    /* Search */
+    .search-wrap { padding: 16px; border-bottom: 1px solid var(--border); }
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0 12px; transition: border-color 0.15s;
     }
-    .search-bar input {
-      flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 5px;
-      font-size: 13px; outline: none;
+    .search-box:focus-within { border-color: var(--accent); }
+    .search-icon { color: var(--text-dim); font-size: 14px; }
+    .search-box input {
+      flex: 1; padding: 10px 0; background: transparent; border: none;
+      color: var(--text); font-size: 13px; outline: none;
     }
-    .search-bar input:focus { border-color: #1a237e; }
-    .search-hint { font-size: 11px; color: #999; padding: 2px 16px 0; background: white; }
+    .search-box input::placeholder { color: var(--text-dim); }
 
-    /* Content Area */
+    /* Active filters bar */
+    .active-filters {
+      display: flex; flex-wrap: wrap; gap: 4px; padding: 0 16px 10px;
+    }
+    .active-filter-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;
+    }
+    /* Active filter tag colors from inline styles */
+    .active-filter-tag .x { opacity: 0.6; }
+    .active-filter-tag:hover .x { opacity: 1; }
+
+    /* Results info */
+    .results-info {
+      padding: 6px 16px; font-size: 11px; color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Content */
     .content { flex: 1; display: flex; overflow: hidden; }
 
-    /* Manual List */
-    .manual-list { width: 45%; overflow-y: auto; border-right: 1px solid #ddd; }
-    .list-header {
-      display: grid; grid-template-columns: 100px 80px 1fr;
-      padding: 8px 12px; background: #f0f0f0; border-bottom: 1px solid #ddd;
-      font-size: 11px; font-weight: 600; color: #666;
-    }
-    .manual-item {
-      display: grid; grid-template-columns: 100px 80px 1fr;
-      padding: 10px 12px; border-bottom: 1px solid #eee;
-      cursor: pointer; transition: background 0.15s; font-size: 12px;
-    }
-    .manual-item:hover { background: #e8eaf6; }
-    .manual-item.active { background: #c5cae9; }
-    .col-a { color: #1a237e; font-weight: 500; }
-    .col-b { color: #e65100; font-size: 11px; }
-    .col-title { color: #333; }
-    .col-tags { margin-top: 3px; }
-    .tag {
-      display: inline-block; padding: 1px 5px; margin: 1px;
-      background: #e8eaf6; color: #1a237e; border-radius: 3px; font-size: 10px;
-    }
-    .tag.legacy { background: #fff3e0; color: #e65100; }
-    .empty-state { padding: 24px; text-align: center; color: #999; font-size: 13px; }
+    /* Card List */
+    .card-list { width: 45%; overflow-y: auto; padding: 8px; }
+    .card-list::-webkit-scrollbar { width: 4px; }
+    .card-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* Manual Viewer */
-    .manual-viewer { width: 55%; overflow-y: auto; padding: 20px; background: white; }
-    .manual-viewer .placeholder {
-      display: flex; align-items: center; justify-content: center;
-      height: 100%; color: #999; font-size: 14px;
+    .card {
+      padding: 14px 16px; margin-bottom: 6px; border-radius: var(--radius);
+      border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
     }
-    .viewer-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1a237e; }
-    .viewer-meta {
-      font-size: 11px; color: #666; margin-bottom: 14px;
-      padding: 10px; background: #f9f9f9; border-radius: 6px; line-height: 1.8;
+    .card:hover { background: var(--surface); border-color: var(--border); }
+    .card.active { background: var(--surface); border-color: var(--accent); }
+    .card-title { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .card-meta {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;
     }
-    .viewer-meta strong { color: #333; }
-    .viewer-body { font-size: 13px; line-height: 1.7; }
-    .viewer-body h1 { font-size: 18px; margin: 14px 0 6px; color: #1a237e; }
-    .viewer-body h2 { font-size: 15px; margin: 12px 0 5px; color: #333; }
-    .viewer-body h3 { font-size: 13px; margin: 10px 0 4px; color: #555; }
-    .viewer-body ul, .viewer-body ol { padding-left: 20px; margin: 4px 0; }
-    .viewer-body li { margin: 2px 0; }
-    .viewer-body table { border-collapse: collapse; margin: 6px 0; width: 100%; }
-    .viewer-body th, .viewer-body td {
-      border: 1px solid #ddd; padding: 5px 8px; text-align: left; font-size: 12px;
+    .card-badge {
+      font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 500;
     }
-    .viewer-body th { background: #f5f5f5; }
-    .viewer-body code { background: #f5f5f5; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
-    .viewer-body pre {
-      background: #263238; color: #eee; padding: 10px; border-radius: 5px;
-      overflow-x: auto; margin: 6px 0; font-size: 12px;
+    /* Badge colors from inline styles */
+    .card-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+    .card-tag {
+      font-size: 10px; color: var(--text-dim); padding: 1px 6px;
+      border: 1px solid var(--border); border-radius: 3px;
     }
-    .viewer-body pre code { background: none; color: inherit; }
+    .empty { padding: 40px; text-align: center; color: var(--text-dim); font-size: 13px; }
 
-    /* Q&A Panel */
-    .qa-panel {
-      background: white; border-top: 1px solid #ddd;
-      display: flex; flex-direction: column; height: 220px;
+    /* Viewer */
+    .viewer {
+      width: 55%; overflow-y: auto; border-left: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    .viewer::-webkit-scrollbar { width: 4px; }
+    .viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .viewer-placeholder {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      color: var(--text-dim); font-size: 13px;
+    }
+    .viewer-content { padding: 24px; display: none; }
+    .viewer-content.show { display: block; }
+    .viewer-title { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+    .viewer-axes {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px; margin-bottom: 20px;
+    }
+    .viewer-axis-card {
+      padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .viewer-axis-label { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; font-weight: 600; }
+    .viewer-axis-value { font-size: 13px; font-weight: 500; }
+    /* Viewer axis colors from inline styles */
+
+    .viewer-body { font-size: 14px; line-height: 1.8; color: var(--text); }
+    .viewer-body h1 { font-size: 18px; margin: 20px 0 8px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .viewer-body h2 { font-size: 15px; margin: 16px 0 6px; color: var(--text); }
+    .viewer-body h3 { font-size: 14px; margin: 12px 0 4px; color: var(--text-dim); }
+    .viewer-body ul, .viewer-body ol { padding-left: 20px; margin: 6px 0; }
+    .viewer-body li { margin: 3px 0; }
+    .viewer-body strong { color: var(--text); }
+    .viewer-body table { border-collapse: collapse; margin: 8px 0; width: 100%; }
+    .viewer-body th, .viewer-body td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; font-size: 13px; }
+    .viewer-body th { background: var(--surface2); }
+    .viewer-body code { background: var(--surface2); padding: 2px 6px; border-radius: 3px; font-size: 12px; color: var(--accent); }
+    .viewer-body pre { background: #1e2130; padding: 14px; border-radius: 6px; overflow-x: auto; margin: 8px 0; }
+    .viewer-body pre code { background: none; color: #e4e6ed; }
+
+    /* ── Q&A ── */
+    .qa {
+      border-top: 1px solid var(--border); display: flex; flex-direction: column;
+      height: 200px; background: var(--surface2);
     }
     .qa-header {
-      padding: 8px 16px; background: #1a237e; color: white;
-      font-size: 13px; font-weight: 500;
+      padding: 8px 16px; border-bottom: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text-dim);
       display: flex; justify-content: space-between; align-items: center;
     }
+    .qa-clear { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 11px; }
+    .qa-clear:hover { color: var(--text); }
     .qa-messages { flex: 1; overflow-y: auto; padding: 10px 16px; }
     .qa-msg {
-      margin-bottom: 8px; padding: 8px 12px; border-radius: 8px;
-      font-size: 12px; line-height: 1.6; max-width: 85%;
+      margin-bottom: 8px; padding: 8px 12px; border-radius: var(--radius);
+      font-size: 12px; line-height: 1.6; max-width: 80%;
     }
-    .qa-msg.user { background: #e8eaf6; margin-left: auto; text-align: right; }
-    .qa-msg.ai { background: #f5f5f5; }
-    .qa-msg.system { background: #fff3e0; color: #e65100; text-align: center; max-width: 100%; font-size: 11px; }
-    .qa-input {
-      display: flex; gap: 8px; padding: 8px 16px; border-top: 1px solid #eee;
+    .qa-msg.user { background: var(--accent-soft); color: var(--accent); margin-left: auto; text-align: right; }
+    .qa-msg.ai { background: var(--surface); color: var(--text); }
+    .qa-msg.system { background: var(--surface); color: var(--text-dim); text-align: center; max-width: 100%; font-size: 11px; }
+    .qa-input-wrap {
+      display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--border);
     }
-    .qa-input input {
-      flex: 1; padding: 7px 10px; border: 1px solid #ddd; border-radius: 5px;
-      font-size: 12px; outline: none;
+    .qa-input-wrap input {
+      flex: 1; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 12px; outline: none;
     }
+    .qa-input-wrap input:focus { border-color: var(--accent); }
+    .qa-btn {
+      padding: 8px 16px; background: var(--accent); color: white; border: none;
+      border-radius: var(--radius); cursor: pointer; font-size: 12px; font-weight: 500;
+    }
+    .qa-btn:hover { opacity: 0.9; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <div>
-    <h1>휴텍씨 메뉴얼 검색 시스템</h1>
-    <div class="subtitle">5축 필터 (A분야 / B급수 / C홈페이지 / D부서 / E등급) + AI Q&A</div>
-  </div>
+  <h1>휴텍씨 메뉴얼</h1>
+  <span class="badge" id="total-count">0개 메뉴얼</span>
 </div>
 
-<div class="container">
-  <!-- Sidebar: 5-Axis Filters -->
-  <div class="sidebar">
-    <div class="axis-group">
-      <div class="axis-title">A. 분야</div>
-      <div class="filter-row">
-        <label>대분류</label>
-        <select id="a-large" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-      <div class="filter-row">
-        <label>중분류</label>
-        <select id="a-medium" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-    </div>
+<div class="app">
+  <!-- Sidebar: Chip-based filters -->
+  <div class="sidebar" id="sidebar"></div>
 
-    <div class="axis-group">
-      <div class="axis-title">B. 급수</div>
-      <div class="filter-row">
-        <label>대분류</label>
-        <select id="b-large" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-      <div class="filter-row">
-        <label>중분류</label>
-        <select id="b-medium" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-      <div class="filter-row">
-        <label>소분류</label>
-        <select id="b-small" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-    </div>
-
-    <div class="axis-group">
-      <div class="axis-title">C. 홈페이지</div>
-      <div class="filter-row">
-        <label>대분류</label>
-        <select id="c-large" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-    </div>
-
-    <div class="axis-group">
-      <div class="axis-title">D. 부서</div>
-      <div class="filter-row">
-        <label>대분류</label>
-        <select id="d-large" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-    </div>
-
-    <div class="axis-group">
-      <div class="axis-title">E. 등급</div>
-      <div class="filter-row">
-        <select id="e-grade" onchange="applyFilters()"><option value="">전체</option></select>
-      </div>
-    </div>
-
-    <div class="filter-actions">
-      <button class="btn btn-secondary" onclick="resetFilters()" style="width:100%">필터 초기화</button>
-    </div>
-  </div>
-
-  <!-- Main Area -->
+  <!-- Main -->
   <div class="main">
-    <div class="search-bar">
-      <input type="text" id="search-input" placeholder="업무를 설명해보세요 (예: 법률 번역, AI 윤리)" onkeydown="if(event.key==='Enter')doSearch()">
-      <button class="btn btn-primary" onclick="doSearch()">검색</button>
+    <div class="search-wrap">
+      <div class="search-box">
+        <span class="search-icon">&#x1F50D;</span>
+        <input type="text" id="search-input" placeholder="업무를 설명해보세요 (예: 법률 번역, AI 윤리, 음성 더빙)" onkeydown="if(event.key==='Enter')doSearch()">
+      </div>
     </div>
-
+    <div class="active-filters" id="active-filters"></div>
+    <div class="results-info" id="results-info"></div>
 
     <div class="content">
-      <div class="manual-list">
-        <div class="list-header">
-          <span>A분야</span>
-          <span>B급수</span>
-          <span>제목</span>
-        </div>
-        <div id="manual-list-body"></div>
-      </div>
-
-      <div class="manual-viewer">
-        <div class="placeholder" id="viewer-placeholder">왼쪽 목록에서 메뉴얼을 선택하세요</div>
-        <div id="viewer-content" style="display:none">
+      <div class="card-list" id="card-list"></div>
+      <div class="viewer">
+        <div class="viewer-placeholder" id="viewer-placeholder">메뉴얼을 선택하세요</div>
+        <div class="viewer-content" id="viewer-content">
           <div class="viewer-title" id="viewer-title"></div>
-          <div class="viewer-meta" id="viewer-meta"></div>
+          <div class="viewer-axes" id="viewer-axes"></div>
           <div class="viewer-body" id="viewer-body"></div>
         </div>
       </div>
     </div>
 
-    <div class="qa-panel">
+    <div class="qa">
       <div class="qa-header">
         <span>AI Q&A</span>
-        <button class="btn" style="background:rgba(255,255,255,0.2);color:white;font-size:11px;padding:3px 8px" onclick="clearQA()">초기화</button>
+        <button class="qa-clear" onclick="clearQA()">초기화</button>
       </div>
       <div class="qa-messages" id="qa-messages">
-        <div class="qa-msg system">메뉴얼을 선택/검색한 뒤 질문하면 해당 내용 기반으로 답변합니다.</div>
+        <div class="qa-msg system">메뉴얼 기반 AI 질답 — 검색 후 질문하세요</div>
       </div>
-      <div class="qa-input">
-        <input type="text" id="qa-input" placeholder="메뉴얼에 대해 질문하세요..." onkeydown="if(event.key==='Enter')askQuestion()">
-        <button class="btn btn-primary" onclick="askQuestion()">질문</button>
+      <div class="qa-input-wrap">
+        <input type="text" id="qa-input" placeholder="질문을 입력하세요..." onkeydown="if(event.key==='Enter')askQuestion()">
+        <button class="qa-btn" onclick="askQuestion()">전송</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-  const API = '';
-  let allManuals = [];
-  let currentManualIds = [];
-  let currentViewManual = null;
+const API = '';
+let allManuals = [];
+let filteredManuals = [];
+let currentViewId = null;
+let currentManualIds = [];
+let colorMap = {};
 
-  async function init() {
-    const [filterRes, manualRes] = await Promise.all([
-      fetch(`${API}/api/filters`).then(r => r.json()),
-      fetch(`${API}/api/manuals`).then(r => r.json()),
-    ]);
-    allManuals = manualRes.manuals;
+const activeFilters = {};
 
-    // Populate filter dropdowns
-    populateSelect('a-large', filterRes['A분야']['대']);
-    populateSelect('a-medium', filterRes['A분야']['중']);
-    populateSelect('b-large', filterRes['B급수']['대']);
-    populateSelect('b-medium', filterRes['B급수']['중']);
-    populateSelect('b-small', filterRes['B급수']['소']);
-    populateSelect('c-large', filterRes['C홈페이지']['대']);
-    populateSelect('d-large', filterRes['D부서']['대']);
-    populateSelect('e-grade', filterRes['E등급'] || []);
+const AXES = [
+  { key: 'A분야', label: 'A. 분야', levels: ['대', '중'] },
+  { key: 'B급수', label: 'B. 급수', levels: ['대', '중', '소'] },
+  { key: 'C홈페이지', label: 'C. 홈페이지', levels: ['대'] },
+  { key: 'D부서', label: 'D. 부서', levels: ['대'] },
+  { key: 'E등급', label: 'E. 등급', levels: null },
+];
 
-    renderManualList(allManuals);
-  }
+const DEFAULT_COLOR = { bg: '#f0f1f4', fg: '#4b5060', border: '#d0d3db' };
 
-  function populateSelect(id, values) {
-    const sel = document.getElementById(id);
-    const current = sel.value;
-    sel.innerHTML = '<option value="">전체</option>';
-    values.forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = v; opt.textContent = v;
-      sel.appendChild(opt);
-    });
-    sel.value = current;
-  }
+function getColor(axisKey, level, value) {
+  if (axisKey === 'E등급') return colorMap['E등급']?.[value] || DEFAULT_COLOR;
+  return colorMap[axisKey]?.[level]?.[value] || DEFAULT_COLOR;
+}
 
-  async function applyFilters() {
-    const params = new URLSearchParams();
-    const map = {
-      'a-large': 'a_large', 'a-medium': 'a_medium',
-      'b-large': 'b_large', 'b-medium': 'b_medium', 'b-small': 'b_small',
-      'c-large': 'c_large', 'd-large': 'd_large',
-    };
-    for (const [domId, paramName] of Object.entries(map)) {
-      const val = document.getElementById(domId).value;
-      if (val) params.set(paramName, val);
+function colorStyle(c, active) {
+  if (active) return `background:${c.bg};color:${c.fg};border-color:${c.fg}`;
+  return `border-color:${c.border}`;
+}
+
+function badgeStyle(c) {
+  return `background:${c.bg};color:${c.fg}`;
+}
+
+async function init() {
+  const [res, colors] = await Promise.all([
+    fetch(`${API}/api/manuals`).then(r => r.json()),
+    fetch(`${API}/api/colors`).then(r => r.json()),
+  ]);
+  allManuals = res.manuals;
+  filteredManuals = [...allManuals];
+  colorMap = colors;
+  document.getElementById('total-count').textContent = `${allManuals.length}개 메뉴얼`;
+  buildSidebar();
+  renderList();
+}
+
+// ── Sidebar ──
+function buildSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  let html = '';
+
+  for (const axis of AXES) {
+    html += `<div class="axis">`;
+    html += `<div class="axis-header"><span class="axis-label">${axis.label}</span><div class="axis-line"></div></div>`;
+
+    if (axis.levels) {
+      for (const level of axis.levels) {
+        const values = getUniqueValues(axis.key, level);
+        if (values.length === 0) continue;
+        if (axis.levels.length > 1) {
+          const levelLabel = level === '대' ? '대분류' : level === '중' ? '중분류' : '소분류';
+          html += `<div class="chip-group-label">${levelLabel}</div>`;
+        }
+        html += `<div class="chip-group">`;
+        for (const val of values) {
+          const fkey = `${axis.key}.${level}`;
+          const count = countManuals(axis.key, level, val);
+          const isActive = activeFilters[fkey] === val;
+          const c = getColor(axis.key, level, val);
+          html += `<button class="chip ${isActive ? 'active' : ''}" style="${colorStyle(c, isActive)}" onclick="toggleFilter('${fkey}','${val}')" data-filter="${fkey}" data-value="${val}" data-axis="${axis.key}" data-level="${level}">
+            ${val} <span class="count" ${isActive ? `style="background:${c.fg};color:white"` : ''}>${count}</span>
+          </button>`;
+        }
+        html += `</div>`;
+      }
+    } else {
+      const values = getUniqueE();
+      if (values.length > 0) {
+        html += `<div class="chip-group">`;
+        for (const val of values) {
+          const fkey = 'E등급';
+          const count = allManuals.filter(m => m['E등급'] === val).length;
+          const isActive = activeFilters[fkey] === val;
+          const c = getColor('E등급', null, val);
+          html += `<button class="chip ${isActive ? 'active' : ''}" style="${colorStyle(c, isActive)}" onclick="toggleFilter('${fkey}','${val}')" data-filter="${fkey}" data-value="${val}" data-axis="E등급" data-level="">
+            ${val} <span class="count" ${isActive ? `style="background:${c.fg};color:white"` : ''}>${count}</span>
+          </button>`;
+        }
+        html += `</div>`;
+      }
     }
-    // E등급은 클라이언트 필터
-    const res = await fetch(`${API}/api/manuals?${params}`).then(r => r.json());
-    let manuals = res.manuals;
-    const eGrade = document.getElementById('e-grade').value;
-    if (eGrade) {
-      manuals = manuals.filter(m => m['E등급'] === eGrade);
+    html += `</div>`;
+  }
+
+  html += `<button class="reset-btn" onclick="resetFilters()">필터 초기화</button>`;
+  sidebar.innerHTML = html;
+}
+
+function getUniqueValues(axisKey, level) {
+  const vals = new Set();
+  allManuals.forEach(m => {
+    const v = m[axisKey]?.[level];
+    if (v && v !== '-') vals.add(v);
+  });
+  return [...vals].sort();
+}
+
+function getUniqueE() {
+  const vals = new Set();
+  allManuals.forEach(m => {
+    const v = m['E등급'];
+    if (v && v !== '-') vals.add(v);
+  });
+  return [...vals].sort();
+}
+
+function countManuals(axisKey, level, value) {
+  return allManuals.filter(m => m[axisKey]?.[level] === value).length;
+}
+
+// ── Filtering ──
+function toggleFilter(fkey, value) {
+  if (activeFilters[fkey] === value) {
+    delete activeFilters[fkey];
+  } else {
+    activeFilters[fkey] = value;
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  filteredManuals = allManuals.filter(m => {
+    for (const [fkey, value] of Object.entries(activeFilters)) {
+      if (fkey === 'E등급') {
+        if (m['E등급'] !== value) return false;
+      } else {
+        const [axis, level] = fkey.split('.');
+        if (m[axis]?.[level] !== value) return false;
+      }
     }
-    allManuals = manuals;
-    renderManualList(allManuals);
-  }
+    return true;
+  });
+  renderActiveFilters();
+  renderList();
+  updateChipStates();
+}
 
-  function resetFilters() {
-    ['a-large','a-medium','b-large','b-medium','b-small','c-large','d-large','e-grade'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('search-input').value = '';
-    applyFilters();
-  }
+function renderActiveFilters() {
+  const el = document.getElementById('active-filters');
+  const entries = Object.entries(activeFilters);
+  if (entries.length === 0) { el.innerHTML = ''; return; }
 
-  async function doSearch() {
-    const query = document.getElementById('search-input').value.trim();
-    if (!query) { applyFilters(); return; }
-    const res = await fetch(`${API}/api/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    }).then(r => r.json());
-    allManuals = res.manuals;
-    renderManualList(allManuals);
-  }
-
-  function renderManualList(manuals) {
-    const body = document.getElementById('manual-list-body');
-    currentManualIds = manuals.map(m => m.id);
-    if (manuals.length === 0) {
-      body.innerHTML = '<div class="empty-state">검색 결과가 없습니다</div>';
-      return;
+  el.innerHTML = entries.map(([fkey, value]) => {
+    let c;
+    if (fkey === 'E등급') {
+      c = getColor('E등급', null, value);
+    } else {
+      const [axis, level] = fkey.split('.');
+      c = getColor(axis, level, value);
     }
-    body.innerHTML = manuals.map(m => `
-      <div class="manual-item ${currentViewManual === m.id ? 'active' : ''}" onclick="viewManual('${m.id}')">
-        <span class="col-a">${m['A분야']['대']}<br><small style="color:#666">${m['A분야']['중']}</small></span>
-        <span class="col-b">${m['B급수']['대']}<br>${m['B급수']['중']} ${m['B급수']['소']}</span>
-        <span>
-          <div class="col-title">${m.title}</div>
-          <div class="col-tags">
-            ${m.tags.slice(0,4).map(t => `<span class="tag">${t}</span>`).join('')}
-          </div>
-        </span>
+    return `<span class="active-filter-tag" style="${badgeStyle(c)}" onclick="toggleFilter('${fkey}','${value}')">${value} <span class="x">✕</span></span>`;
+  }).join('');
+}
+
+function updateChipStates() {
+  document.querySelectorAll('.chip').forEach(chip => {
+    const fkey = chip.dataset.filter;
+    const val = chip.dataset.value;
+    const axis = chip.dataset.axis;
+    const level = chip.dataset.level;
+    const isActive = activeFilters[fkey] === val;
+    const c = getColor(axis, level || null, val);
+    chip.classList.toggle('active', isActive);
+    chip.style.cssText = colorStyle(c, isActive);
+    const countEl = chip.querySelector('.count');
+    if (countEl) {
+      countEl.style.cssText = isActive ? `background:${c.fg};color:white` : '';
+    }
+  });
+}
+
+function resetFilters() {
+  for (const key in activeFilters) delete activeFilters[key];
+  document.getElementById('search-input').value = '';
+  filteredManuals = [...allManuals];
+  renderActiveFilters();
+  renderList();
+  updateChipStates();
+}
+
+// ── Search ──
+async function doSearch() {
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) { resetFilters(); return; }
+  const res = await fetch(`${API}/api/search`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  }).then(r => r.json());
+  filteredManuals = res.manuals;
+  renderList();
+}
+
+// ── Card List ──
+function renderList() {
+  const el = document.getElementById('card-list');
+  currentManualIds = filteredManuals.map(m => m.id);
+  document.getElementById('results-info').textContent = `${filteredManuals.length}개 결과`;
+
+  if (filteredManuals.length === 0) {
+    el.innerHTML = '<div class="empty">결과 없음</div>';
+    return;
+  }
+
+  el.innerHTML = filteredManuals.map(m => {
+    const cA = getColor('A분야', '대', m['A분야']['대']);
+    const cB = getColor('B급수', '대', m['B급수']['대']);
+    const cC = getColor('C홈페이지', '대', m['C홈페이지']['대']);
+    const cD = getColor('D부서', '대', m['D부서']['대']);
+    return `
+    <div class="card ${currentViewId === m.id ? 'active' : ''}" onclick="viewManual('${m.id}')">
+      <div class="card-title">${m.title}</div>
+      <div class="card-meta">
+        <span class="card-badge" style="${badgeStyle(cA)}">${m['A분야']['대']} · ${m['A분야']['중']}</span>
+        <span class="card-badge" style="${badgeStyle(cB)}">${m['B급수']['대']} ${m['B급수']['중']} ${m['B급수']['소']}</span>
+        ${m['C홈페이지']['대'] !== '-' ? `<span class="card-badge" style="${badgeStyle(cC)}">${m['C홈페이지']['대']}</span>` : ''}
+        <span class="card-badge" style="${badgeStyle(cD)}">${m['D부서']['대']}</span>
       </div>
-    `).join('');
-  }
+      <div class="card-tags">${m.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
 
-  async function viewManual(id) {
-    currentViewManual = id;
-    renderManualList(allManuals);
-    const res = await fetch(`${API}/api/manuals/${id}`).then(r => r.json());
-    document.getElementById('viewer-placeholder').style.display = 'none';
-    document.getElementById('viewer-content').style.display = 'block';
-    document.getElementById('viewer-title').textContent = res.title;
-    document.getElementById('viewer-meta').innerHTML = `
-      <strong>A분야:</strong> ${res['A분야']['대']} > ${res['A분야']['중']} > ${res['A분야']['소']}
-      &nbsp;|&nbsp; <strong>B급수:</strong> ${res['B급수']['대']} / ${res['B급수']['중']} / ${res['B급수']['소']}<br>
-      <strong>C홈페이지:</strong> ${res['C홈페이지']['대']} (${res['C홈페이지']['세부']})
-      &nbsp;|&nbsp; <strong>D부서:</strong> #${res['D부서']['번호']} ${res['D부서']['대']}
-      &nbsp;|&nbsp; <strong>E등급:</strong> ${res['E등급']}<br>
-      <strong>파일:</strong> ${res.file}
-    `;
-    document.getElementById('viewer-body').innerHTML = markdownToHtml(res.content);
-  }
+// ── Viewer ──
+async function viewManual(id) {
+  currentViewId = id;
+  renderList();
+  const res = await fetch(`${API}/api/manuals/${id}`).then(r => r.json());
 
-  function markdownToHtml(md) {
-    let html = md;
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/^\|(.+)\|$/gm, (match, content) => {
-      const cells = content.split('|').map(c => c.trim());
-      return '<tr>' + cells.map(c => {
-        if (c.match(/^-+$/)) return null;
-        return `<td>${c}</td>`;
-      }).filter(Boolean).join('') + '</tr>';
-    });
-    html = html.replace(/(<tr>.*<\/tr>\n?)+/g, '<table>$&</table>');
-    html = html.replace(/<tr>\s*<\/tr>/g, '');
-    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-    html = html.replace(/\n\n/g, '<br><br>');
-    return html;
-  }
+  document.getElementById('viewer-placeholder').style.display = 'none';
+  const vc = document.getElementById('viewer-content');
+  vc.classList.add('show');
+  document.getElementById('viewer-title').textContent = res.title;
 
-  function addQAMessage(text, type) {
-    const div = document.getElementById('qa-messages');
-    const msg = document.createElement('div');
-    msg.className = `qa-msg ${type}`;
-    msg.innerHTML = text;
-    div.appendChild(msg);
-    div.scrollTop = div.scrollHeight;
-  }
+  const vA = getColor('A분야', '대', res['A분야']['대']);
+  const vB = getColor('B급수', '대', res['B급수']['대']);
+  const vC = getColor('C홈페이지', '대', res['C홈페이지']['대']);
+  const vD = getColor('D부서', '대', res['D부서']['대']);
+  const vE = getColor('E등급', null, res['E등급']);
+  document.getElementById('viewer-axes').innerHTML = `
+    <div class="viewer-axis-card" style="border-color:${vA.border}">
+      <div class="viewer-axis-label">A. 분야</div>
+      <div class="viewer-axis-value" style="color:${vA.fg}">${res['A분야']['대']} > ${res['A분야']['중']}${res['A분야']['소'] !== '-' ? ' > ' + res['A분야']['소'] : ''}</div>
+    </div>
+    <div class="viewer-axis-card" style="border-color:${vB.border}">
+      <div class="viewer-axis-label">B. 급수</div>
+      <div class="viewer-axis-value" style="color:${vB.fg}">${res['B급수']['대']} / ${res['B급수']['중']} / ${res['B급수']['소']}</div>
+    </div>
+    <div class="viewer-axis-card" style="border-color:${vC.border}">
+      <div class="viewer-axis-label">C. 홈페이지</div>
+      <div class="viewer-axis-value" style="color:${vC.fg}">${res['C홈페이지']['대']}${res['C홈페이지']['세부'] !== '-' ? ' · ' + res['C홈페이지']['세부'] : ''}</div>
+    </div>
+    <div class="viewer-axis-card" style="border-color:${vD.border}">
+      <div class="viewer-axis-label">D. 부서</div>
+      <div class="viewer-axis-value" style="color:${vD.fg}">#${res['D부서']['번호']} ${res['D부서']['대']}${res['D부서']['중'] !== '-' ? ' · ' + res['D부서']['중'] : ''}</div>
+    </div>
+    <div class="viewer-axis-card" style="border-color:${vE.border}">
+      <div class="viewer-axis-label">E. 등급</div>
+      <div class="viewer-axis-value" style="color:${vE.fg}">${res['E등급'] !== '-' ? res['E등급'] : '—'}</div>
+    </div>
+  `;
 
-  async function askQuestion() {
-    const input = document.getElementById('qa-input');
-    const question = input.value.trim();
-    if (!question) return;
-    addQAMessage(question, 'user');
-    input.value = '';
-    addQAMessage('답변 생성 중...', 'system');
-    try {
-      const res = await fetch(`${API}/api/qa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, manual_ids: currentManualIds.slice(0, 5) }),
-      }).then(r => {
-        if (!r.ok) return r.json().then(e => { throw new Error(e.detail); });
-        return r.json();
-      });
-      const msgs = document.getElementById('qa-messages');
-      msgs.removeChild(msgs.lastChild);
-      addQAMessage(res.answer.replace(/\n/g, '<br>'), 'ai');
-    } catch (e) {
-      const msgs = document.getElementById('qa-messages');
-      msgs.removeChild(msgs.lastChild);
-      addQAMessage(`오류: ${e.message}`, 'system');
-    }
-  }
+  document.getElementById('viewer-body').innerHTML = md(res.content);
+}
 
-  function clearQA() {
-    document.getElementById('qa-messages').innerHTML =
-      '<div class="qa-msg system">메뉴얼을 선택/검색한 뒤 질문하면 해당 내용 기반으로 답변합니다.</div>';
-  }
+function md(s) {
+  s = s.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/^\|(.+)\|$/gm, (_, c) => '<tr>' + c.split('|').map(x => x.trim()).filter(x => !x.match(/^-+$/)).map(x => `<td>${x}</td>`).join('') + '</tr>');
+  s = s.replace(/(<tr>.*<\/tr>\n?)+/g, '<table>$&</table>');
+  s = s.replace(/<tr>\s*<\/tr>/g, '');
+  s = s.replace(/^- (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+  s = s.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+  s = s.replace(/\n\n/g, '<br><br>');
+  return s;
+}
 
-  init();
+// ── Q&A ──
+function addMsg(text, type) {
+  const el = document.getElementById('qa-messages');
+  const d = document.createElement('div');
+  d.className = `qa-msg ${type}`;
+  d.innerHTML = text;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function askQuestion() {
+  const input = document.getElementById('qa-input');
+  const q = input.value.trim();
+  if (!q) return;
+  addMsg(q, 'user');
+  input.value = '';
+  addMsg('생각 중...', 'system');
+  try {
+    const res = await fetch(`${API}/api/qa`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, manual_ids: currentManualIds.slice(0, 5) }),
+    }).then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.detail); }); return r.json(); });
+    document.getElementById('qa-messages').removeChild(document.getElementById('qa-messages').lastChild);
+    addMsg(res.answer.replace(/\n/g, '<br>'), 'ai');
+  } catch (e) {
+    document.getElementById('qa-messages').removeChild(document.getElementById('qa-messages').lastChild);
+    addMsg(`오류: ${e.message}`, 'system');
+  }
+}
+
+function clearQA() {
+  document.getElementById('qa-messages').innerHTML = '<div class="qa-msg system">메뉴얼 기반 AI 질답 — 검색 후 질문하세요</div>';
+}
+
+init();
 </script>
 </body>
 </html>

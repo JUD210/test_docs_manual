@@ -28,6 +28,14 @@ app.add_middleware(
 BASE_DIR = Path(__file__).parent
 MANUALS_DIR = BASE_DIR / "manuals"
 INDEX_PATH = MANUALS_DIR / "_index.json"
+COLORS_PATH = MANUALS_DIR / "_colors.json"
+
+
+def load_colors() -> dict:
+    if COLORS_PATH.exists():
+        with open(COLORS_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
 
 
 def load_index() -> list[dict]:
@@ -70,6 +78,12 @@ def build_searchable_text(m: dict) -> str:
 
 
 # --- API ---
+
+
+@app.get("/api/colors")
+async def get_colors():
+    """색상 매핑 반환"""
+    return load_colors()
 
 
 @app.get("/")
@@ -171,27 +185,38 @@ class SearchRequest(BaseModel):
 
 @app.post("/api/search")
 async def search_manuals(req: SearchRequest):
-    """전체 5축 + 태그 + 본문 검색"""
+    """전체 5축 + 태그 + 본문 검색 (AND 우선, 결과 없으면 OR 폴백)"""
     manuals = load_index()
     query = req.query.lower()
-    results = []
+    words = query.split()
 
-    for m in manuals:
-        score = 0
+    def score_manual(m, required_all: bool) -> Optional[dict]:
         searchable = build_searchable_text(m)
+        content = load_manual_content(m["file"])
+        full_text = f"{searchable} {content.lower()}"
 
-        for word in query.split():
+        if required_all and not all(w in full_text for w in words):
+            return None
+
+        score = 0
+        for word in words:
             if word in searchable:
                 score += 1
             if word in [t.lower() for t in m.get("tags", [])]:
                 score += 2
+            if word in content.lower():
+                score += 1
 
         if score > 0:
-            content = load_manual_content(m["file"])
-            for word in query.split():
-                if word in content.lower():
-                    score += 1
-            results.append({**m, "score": score})
+            return {**m, "score": score}
+        return None
+
+    # AND: 모든 키워드가 포함된 결과만
+    results = [r for m in manuals if (r := score_manual(m, required_all=True))]
+
+    # OR 폴백: AND 결과가 없으면 하나라도 매칭되는 결과
+    if not results:
+        results = [r for m in manuals if (r := score_manual(m, required_all=False))]
 
     results.sort(key=lambda x: x["score"], reverse=True)
     return {"count": len(results), "manuals": results}
@@ -205,7 +230,7 @@ class QARequest(BaseModel):
 
 @app.post("/api/qa")
 async def qa(req: QARequest):
-    """메뉴얼 기반 AI Q&A"""
+    """메뉴얼 기반 AI Q&A (2단계: GPT 문서 선택 → 답변 생성)"""
     api_key = req.api_key or os.getenv("OPENAI_API_KEY", "")
     if not api_key:
         raise HTTPException(
@@ -213,32 +238,74 @@ async def qa(req: QARequest):
             detail="OpenAI API 키가 필요합니다.",
         )
 
+    from openai import OpenAI
+
+    client = OpenAI(api_key=api_key)
     manuals = load_index()
-    context_parts = []
-
-    if req.manual_ids:
-        for m in manuals:
-            if m["id"] in req.manual_ids:
-                content = load_manual_content(m["file"])
-                context_parts.append(f"## {m['title']}\n{content}")
-    else:
-        search_result = await search_manuals(SearchRequest(query=req.question))
-        for m in search_result["manuals"][:5]:
-            content = load_manual_content(m["file"])
-            context_parts.append(f"## {m['title']}\n{content}")
-
-    if not context_parts:
-        return {
-            "answer": "관련 메뉴얼을 찾지 못했습니다. 다른 질문을 시도해주세요.",
-            "sources": [],
-        }
-
-    context = "\n\n---\n\n".join(context_parts)
+    manuals_by_id = {m["id"]: m for m in manuals}
 
     try:
-        from openai import OpenAI
+        # --- Stage 1: GPT가 질문과 관련된 메뉴얼 선택 ---
+        if req.manual_ids:
+            selected_ids = req.manual_ids
+        else:
+            catalog = "\n".join(
+                f"- id: {m['id']} | 제목: {m['title']} | "
+                f"분야: {m['A분야']['대']}/{m['A분야']['중']} | "
+                f"태그: {', '.join(m.get('tags', []))}"
+                for m in manuals
+            )
 
-        client = OpenAI(api_key=api_key)
+            selection_response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "당신은 메뉴얼 검색 시스템입니다. "
+                            "사용자의 질문과 관련된 메뉴얼의 id를 선택하세요. "
+                            "관련된 메뉴얼의 id만 쉼표로 구분하여 반환하세요. "
+                            "관련 메뉴얼이 없으면 '없음'이라고 답하세요. "
+                            "id 외에 다른 텍스트는 포함하지 마세요."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": f"## 전체 메뉴얼 목록\n{catalog}\n\n## 질문\n{req.question}",
+                    },
+                ],
+                temperature=0,
+                max_tokens=200,
+            )
+
+            raw_ids = selection_response.choices[0].message.content.strip()
+            if raw_ids == "없음":
+                return {
+                    "answer": "관련 메뉴얼을 찾지 못했습니다. 다른 질문을 시도해주세요.",
+                    "sources": [],
+                }
+            selected_ids = [
+                id.strip() for id in raw_ids.split(",") if id.strip() in manuals_by_id
+            ]
+
+        if not selected_ids:
+            return {
+                "answer": "관련 메뉴얼을 찾지 못했습니다. 다른 질문을 시도해주세요.",
+                "sources": [],
+            }
+
+        # --- Stage 2: 선택된 메뉴얼 본문으로 답변 생성 ---
+        source_titles = []
+        context_parts = []
+        for mid in selected_ids:
+            if mid in manuals_by_id:
+                m = manuals_by_id[mid]
+                content = load_manual_content(m["file"])
+                context_parts.append(f"## {m['title']}\n{content}")
+                source_titles.append(m["title"])
+
+        context = "\n\n---\n\n".join(context_parts)
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -262,9 +329,7 @@ async def qa(req: QARequest):
 
         return {
             "answer": response.choices[0].message.content,
-            "sources": [
-                m["title"] for m in manuals if m["id"] in req.manual_ids
-            ],
+            "sources": source_titles,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI 응답 생성 실패: {str(e)}")

@@ -1,0 +1,61 @@
+{
+  "A분야": {
+    "대": {
+      "문서":      { "bg": "#e8f0fe", "fg": "#1a56db", "border": "#93b4f5" },
+      "음성":      { "bg": "#e6f7f5", "fg": "#0e7a6e", "border": "#7dd3c8" },
+      "영상/SNS":  { "bg": "#fde8e8", "fg": "#c81e1e", "border": "#f8a4a4" },
+      "IT/개발":   { "bg": "#ede9fe", "fg": "#6d28d9", "border": "#b8a5e6" }
+    },
+    "중": {
+      "비즈니스":   { "bg": "#e8f0fe", "fg": "#1a56db", "border": "#93b4f5" },
+      "법률":       { "bg": "#fef3cd", "fg": "#92600a", "border": "#f5d77a" },
+      "의료":       { "bg": "#e6f7f5", "fg": "#0e7a6e", "border": "#7dd3c8" },
+      "아나운서":   { "bg": "#dbeafe", "fg": "#1e40af", "border": "#7eb8f7" },
+      "교육강의":   { "bg": "#d1fae5", "fg": "#065f46", "border": "#6ee7b7" },
+      "미디어/장르": { "bg": "#fde8e8", "fg": "#c81e1e", "border": "#f8a4a4" },
+      "개발/보안":  { "bg": "#ede9fe", "fg": "#6d28d9", "border": "#b8a5e6" },
+      "디자인/기획": { "bg": "#fce7f3", "fg": "#9d174d", "border": "#f9a8d4" }
+    }
+  },
+  "B급수": {
+    "대": {
+      "프롬프트": { "bg": "#fff3cd", "fg": "#92600a", "border": "#f5d77a" },
+      "번역":     { "bg": "#cce5ff", "fg": "#004085", "border": "#80bfff" },
+      "윤리":     { "bg": "#f5e0dc", "fg": "#8b3a2f", "border": "#e8a598" }
+    },
+    "중": {
+      "교육": { "bg": "#d1fae5", "fg": "#065f46", "border": "#6ee7b7" },
+      "일반": { "bg": "#f0f1f4", "fg": "#4b5060", "border": "#d0d3db" },
+      "전문": { "bg": "#ede9fe", "fg": "#6d28d9", "border": "#b8a5e6" }
+    },
+    "소": {
+      "1급": { "bg": "#fde8e8", "fg": "#c81e1e", "border": "#f8a4a4" },
+      "2급": { "bg": "#fff3cd", "fg": "#92600a", "border": "#f5d77a" },
+      "4급": { "bg": "#d1fae5", "fg": "#065f46", "border": "#6ee7b7" },
+      "5급": { "bg": "#dbeafe", "fg": "#1e40af", "border": "#7eb8f7" },
+      "6급": { "bg": "#ede9fe", "fg": "#6d28d9", "border": "#b8a5e6" }
+    }
+  },
+  "C홈페이지": {
+    "대": {
+      "교육": { "bg": "#d1fae5", "fg": "#065f46", "border": "#6ee7b7" },
+      "번역": { "bg": "#cce5ff", "fg": "#004085", "border": "#80bfff" }
+    }
+  },
+  "D부서": {
+    "대": {
+      "기획":       { "bg": "#e8f0fe", "fg": "#1a56db", "border": "#93b4f5" },
+      "인사":       { "bg": "#fce7f3", "fg": "#9d174d", "border": "#f9a8d4" },
+      "회계":       { "bg": "#fff3cd", "fg": "#92600a", "border": "#f5d77a" },
+      "강사팀":     { "bg": "#d1fae5", "fg": "#065f46", "border": "#6ee7b7" },
+      "문제은행팀":  { "bg": "#ede9fe", "fg": "#6d28d9", "border": "#b8a5e6" },
+      "마케팅":     { "bg": "#fde8e8", "fg": "#c81e1e", "border": "#f8a4a4" },
+      "관리":       { "bg": "#f0f1f4", "fg": "#4b5060", "border": "#d0d3db" },
+      "홈피":       { "bg": "#dbeafe", "fg": "#1e40af", "border": "#7eb8f7" }
+    }
+  },
+  "E등급": {
+    "전문가": { "bg": "#ede9fe", "fg": "#6d28d9", "border": "#b8a5e6" }
+  },
+  "_default": { "bg": "#f0f1f4", "fg": "#4b5060", "border": "#d0d3db" }
+}
