@@ -1,0 +1,17 @@
+# Logs
+*.log
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Dependencies
+node_modules/
+__pycache__/
