@@ -86,6 +86,12 @@ async def get_colors():
     return load_colors()
 
 
+@app.get("/health")
+async def health():
+    """UptimeRobot 핑용 헬스체크"""
+    return {"status": "ok"}
+
+
 @app.get("/")
 async def root():
     return FileResponse(BASE_DIR / "frontend" / "index.html")
