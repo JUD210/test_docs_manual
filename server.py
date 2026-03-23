@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -35,6 +35,11 @@ def load_index() -> list[dict]:
         return json.load(f)
 
 
+def save_index(data: list[dict]):
+    with open(INDEX_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
 def load_manual_content(file_path: str) -> str:
     full_path = MANUALS_DIR / file_path
     if not full_path.exists():
@@ -42,7 +47,29 @@ def load_manual_content(file_path: str) -> str:
     return full_path.read_text(encoding="utf-8")
 
 
-# --- API Endpoints ---
+def build_searchable_text(m: dict) -> str:
+    """메뉴얼의 모든 메타데이터를 검색 가능한 텍스트로 결합"""
+    parts = [m.get("title", ""), " ".join(m.get("tags", []))]
+    for axis in ["A분야", "B급수"]:
+        for level in ["대", "중", "소"]:
+            val = m.get(axis, {}).get(level, "")
+            if val and val != "-":
+                parts.append(val)
+    for level in ["대", "세부"]:
+        val = m.get("C홈페이지", {}).get(level, "")
+        if val and val != "-":
+            parts.append(val)
+    for level in ["대", "중"]:
+        val = m.get("D부서", {}).get(level, "")
+        if val and val != "-":
+            parts.append(val)
+    e = m.get("E등급", "")
+    if e and e != "-":
+        parts.append(e)
+    return " ".join(parts).lower()
+
+
+# --- API ---
 
 
 @app.get("/")
@@ -52,30 +79,36 @@ async def root():
 
 @app.get("/api/manuals")
 async def list_manuals(
-    homepage_large: Optional[str] = Query(None),
-    homepage_medium: Optional[str] = Query(None),
-    homepage_small: Optional[str] = Query(None),
-    dept_large: Optional[str] = Query(None),
-    dept_medium: Optional[str] = Query(None),
-    dept_small: Optional[str] = Query(None),
+    a_large: Optional[str] = Query(None),
+    a_medium: Optional[str] = Query(None),
+    b_large: Optional[str] = Query(None),
+    b_medium: Optional[str] = Query(None),
+    b_small: Optional[str] = Query(None),
+    c_large: Optional[str] = Query(None),
+    d_large: Optional[str] = Query(None),
+    e_grade: Optional[str] = Query(None),
 ):
-    """필터 기반 메뉴얼 목록 조회"""
+    """5축 필터 기반 메뉴얼 목록 조회"""
     manuals = load_index()
     results = []
 
     for m in manuals:
         match = True
-        if homepage_large and m["homepage"]["대"] != homepage_large:
+        if a_large and m["A분야"]["대"] != a_large:
             match = False
-        if homepage_medium and m["homepage"]["중"] != homepage_medium:
+        if a_medium and m["A분야"]["중"] != a_medium:
             match = False
-        if homepage_small and m["homepage"]["소"] != homepage_small:
+        if b_large and m["B급수"]["대"] != b_large:
             match = False
-        if dept_large and m["department"]["대"] != dept_large:
+        if b_medium and m["B급수"]["중"] != b_medium:
             match = False
-        if dept_medium and m["department"]["중"] != dept_medium:
+        if b_small and m["B급수"]["소"] != b_small:
             match = False
-        if dept_small and m["department"]["소"] != dept_small:
+        if c_large and m["C홈페이지"]["대"] != c_large:
+            match = False
+        if d_large and m["D부서"]["대"] != d_large:
+            match = False
+        if e_grade and m.get("E등급", "-") != e_grade:
             match = False
         if match:
             results.append(m)
@@ -85,7 +118,6 @@ async def list_manuals(
 
 @app.get("/api/manuals/{manual_id}")
 async def get_manual(manual_id: str):
-    """메뉴얼 상세 조회 (내용 포함)"""
     manuals = load_index()
     for m in manuals:
         if m["id"] == manual_id:
@@ -96,20 +128,41 @@ async def get_manual(manual_id: str):
 
 @app.get("/api/filters")
 async def get_filters():
-    """사용 가능한 필터 값 목록"""
+    """사용 가능한 필터 값 목록 (5축)"""
     manuals = load_index()
-    homepage = {"대": set(), "중": set(), "소": set()}
-    department = {"대": set(), "중": set(), "소": set()}
+    filters = {
+        "A분야": {"대": set(), "중": set(), "소": set()},
+        "B급수": {"대": set(), "중": set(), "소": set()},
+        "C홈페이지": {"대": set(), "세부": set()},
+        "D부서": {"대": set(), "중": set()},
+        "E등급": set(),
+    }
 
     for m in manuals:
         for level in ["대", "중", "소"]:
-            homepage[level].add(m["homepage"][level])
-            department[level].add(m["department"][level])
+            for axis in ["A분야", "B급수"]:
+                val = m.get(axis, {}).get(level, "")
+                if val and val != "-":
+                    filters[axis][level].add(val)
+        for level in ["대", "세부"]:
+            val = m.get("C홈페이지", {}).get(level, "")
+            if val and val != "-":
+                filters["C홈페이지"][level].add(val)
+        for level in ["대", "중"]:
+            val = m.get("D부서", {}).get(level, "")
+            if val and val != "-":
+                filters["D부서"][level].add(val)
+        val = m.get("E등급", "")
+        if val and val != "-":
+            filters["E등급"].add(val)
 
-    return {
-        "homepage": {k: sorted(v) for k, v in homepage.items()},
-        "department": {k: sorted(v) for k, v in department.items()},
-    }
+    result = {}
+    for axis, levels in filters.items():
+        if isinstance(levels, set):
+            result[axis] = sorted(levels)
+        else:
+            result[axis] = {k: sorted(v) for k, v in levels.items()}
+    return result
 
 
 class SearchRequest(BaseModel):
@@ -118,28 +171,26 @@ class SearchRequest(BaseModel):
 
 @app.post("/api/search")
 async def search_manuals(req: SearchRequest):
-    """키워드 기반 메뉴얼 검색"""
+    """전체 5축 + 태그 + 본문 검색"""
     manuals = load_index()
     query = req.query.lower()
     results = []
 
     for m in manuals:
         score = 0
-        searchable = f"{m['title']} {m['detail']} {' '.join(m['tags'])}".lower()
+        searchable = build_searchable_text(m)
+
         for word in query.split():
             if word in searchable:
                 score += 1
-            # 태그 정확 매칭은 가중치
-            if word in [t.lower() for t in m["tags"]]:
+            if word in [t.lower() for t in m.get("tags", [])]:
                 score += 2
 
         if score > 0:
             content = load_manual_content(m["file"])
-            content_lower = content.lower()
             for word in query.split():
-                if word in content_lower:
+                if word in content.lower():
                     score += 1
-
             results.append({**m, "score": score})
 
     results.sort(key=lambda x: x["score"], reverse=True)
@@ -159,21 +210,18 @@ async def qa(req: QARequest):
     if not api_key:
         raise HTTPException(
             status_code=400,
-            detail="OpenAI API 키가 필요합니다. .env 파일에 OPENAI_API_KEY를 설정하거나 요청에 api_key를 포함해주세요.",
+            detail="OpenAI API 키가 필요합니다.",
         )
 
-    # 관련 메뉴얼 내용 수집
     manuals = load_index()
     context_parts = []
 
     if req.manual_ids:
-        # 특정 메뉴얼 지정
         for m in manuals:
             if m["id"] in req.manual_ids:
                 content = load_manual_content(m["file"])
                 context_parts.append(f"## {m['title']}\n{content}")
     else:
-        # 질문 기반 자동 검색
         search_result = await search_manuals(SearchRequest(query=req.question))
         for m in search_result["manuals"][:5]:
             content = load_manual_content(m["file"])
@@ -215,17 +263,118 @@ async def qa(req: QARequest):
         return {
             "answer": response.choices[0].message.content,
             "sources": [
-                m["title"]
-                for m in manuals
-                if m["id"] in req.manual_ids
-                or (
-                    not req.manual_ids
-                    and any(
-                        word in m["title"].lower()
-                        for word in req.question.lower().split()
-                    )
-                )
+                m["title"] for m in manuals if m["id"] in req.manual_ids
             ],
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI 응답 생성 실패: {str(e)}")
+
+
+# --- Auto-categorization ---
+
+
+class CategorizeRequest(BaseModel):
+    file_path: str  # relative to manuals/
+
+
+@app.post("/api/categorize")
+async def auto_categorize(req: CategorizeRequest):
+    """GPT로 메뉴얼 자동 분류 (5축 + 태그)"""
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="OpenAI API 키가 필요합니다.")
+
+    content = load_manual_content(req.file_path)
+
+    from openai import OpenAI
+
+    client = OpenAI(api_key=api_key)
+
+    existing_index = load_index()
+    existing_values = {
+        "A분야_대": sorted(set(m["A분야"]["대"] for m in existing_index)),
+        "A분야_중": sorted(set(m["A분야"]["중"] for m in existing_index if m["A분야"]["중"] != "-")),
+        "B급수_대": sorted(set(m["B급수"]["대"] for m in existing_index)),
+        "B급수_중": sorted(set(m["B급수"]["중"] for m in existing_index)),
+        "C홈페이지_대": sorted(set(m["C홈페이지"]["대"] for m in existing_index if m["C홈페이지"]["대"] != "-")),
+        "D부서_대": sorted(set(m["D부서"]["대"] for m in existing_index if m["D부서"]["대"] != "-")),
+    }
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": f"""당신은 휴텍씨 메뉴얼 분류 시스템입니다.
+메뉴얼 내용을 읽고 아래 5축으로 분류하세요.
+
+기존에 사용 중인 값들:
+{json.dumps(existing_values, ensure_ascii=False, indent=2)}
+
+가능하면 기존 값을 재사용하되, 맞지 않으면 새 값을 만들어도 됩니다.
+해당 없으면 "-"로 표시하세요.
+
+반드시 아래 JSON 형식으로만 응답하세요:
+{{
+  "title": "메뉴얼 제목",
+  "A분야": {{"대": "", "중": "", "소": ""}},
+  "B급수": {{"대": "", "중": "", "소": ""}},
+  "C홈페이지": {{"대": "", "세부": ""}},
+  "D부서": {{"번호": 0, "대": "", "중": ""}},
+  "E등급": "",
+  "tags": ["태그1", "태그2", "태그3", "태그4", "태그5"]
+}}""",
+            },
+            {
+                "role": "user",
+                "content": f"파일경로: {req.file_path}\n\n내용:\n{content}",
+            },
+        ],
+        temperature=0.2,
+        max_tokens=500,
+    )
+
+    result_text = response.choices[0].message.content
+    # Extract JSON from response
+    try:
+        # Handle markdown code blocks
+        if "```" in result_text:
+            result_text = result_text.split("```")[1]
+            if result_text.startswith("json"):
+                result_text = result_text[4:]
+        categorization = json.loads(result_text.strip())
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail=f"분류 결과 파싱 실패: {result_text}")
+
+    # Generate ID from file path
+    file_id = req.file_path.replace("/", "-").replace(".md", "").lower()
+    for char in " _()":
+        file_id = file_id.replace(char, "-")
+
+    entry = {
+        "id": file_id,
+        "file": req.file_path,
+        **categorization,
+    }
+
+    return entry
+
+
+@app.post("/api/categorize-and-save")
+async def categorize_and_save(req: CategorizeRequest):
+    """자동 분류 후 _index.json에 저장"""
+    entry = await auto_categorize(req)
+
+    index = load_index()
+    # 기존 엔트리 업데이트 또는 추가
+    found = False
+    for i, m in enumerate(index):
+        if m["file"] == req.file_path:
+            index[i] = entry
+            found = True
+            break
+    if not found:
+        index.append(entry)
+
+    save_index(index)
+    return {"status": "saved", "entry": entry}
