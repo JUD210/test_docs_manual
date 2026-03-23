@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>휴텍씨 메뉴얼 검색 시스템</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+
+    .header {
+      background: #1a237e; color: white; padding: 16px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .header h1 { font-size: 20px; font-weight: 600; }
+    .header .subtitle { font-size: 13px; opacity: 0.8; }
+
+    .container { display: flex; height: calc(100vh - 56px); }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px; background: white; border-right: 1px solid #ddd;
+      overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar h3 {
+      padding: 12px 16px 8px; font-size: 13px; color: #666;
+      text-transform: uppercase; letter-spacing: 1px;
+      border-bottom: 1px solid #eee;
+    }
+    .filter-group { padding: 8px 16px; }
+    .filter-group label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
+    .filter-group select {
+      width: 100%; padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px;
+      font-size: 13px; background: white;
+    }
+    .filter-actions { padding: 8px 16px 16px; }
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;
+      font-size: 13px; transition: background 0.2s;
+    }
+    .btn-primary { background: #1a237e; color: white; }
+    .btn-primary:hover { background: #283593; }
+    .btn-secondary { background: #e0e0e0; color: #333; }
+    .btn-secondary:hover { background: #bdbdbd; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* Main */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Search Bar */
+    .search-bar {
+      padding: 16px; background: white; border-bottom: 1px solid #ddd;
+      display: flex; gap: 8px;
+    }
+    .search-bar input {
+      flex: 1; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px;
+      font-size: 14px; outline: none;
+    }
+    .search-bar input:focus { border-color: #1a237e; }
+
+    /* Content Area */
+    .content { flex: 1; display: flex; overflow: hidden; }
+
+    /* Manual List */
+    .manual-list {
+      width: 50%; overflow-y: auto; border-right: 1px solid #ddd;
+    }
+    .manual-list .header-row {
+      display: grid; grid-template-columns: 1fr 1fr 2fr;
+      padding: 10px 16px; background: #f9f9f9; border-bottom: 1px solid #ddd;
+      font-size: 12px; font-weight: 600; color: #666;
+    }
+    .manual-item {
+      display: grid; grid-template-columns: 1fr 1fr 2fr;
+      padding: 12px 16px; border-bottom: 1px solid #eee;
+      cursor: pointer; transition: background 0.15s; font-size: 13px;
+    }
+    .manual-item:hover { background: #e8eaf6; }
+    .manual-item.active { background: #c5cae9; }
+    .manual-item .cat-large { color: #1a237e; font-weight: 500; }
+    .manual-item .cat-medium { color: #555; }
+    .manual-item .cat-detail { color: #333; }
+    .tag {
+      display: inline-block; padding: 1px 6px; margin: 1px;
+      background: #e8eaf6; color: #1a237e; border-radius: 3px; font-size: 11px;
+    }
+
+    /* Manual Viewer */
+    .manual-viewer {
+      width: 50%; overflow-y: auto; padding: 20px; background: white;
+    }
+    .manual-viewer .placeholder {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: #999; font-size: 15px;
+    }
+    .manual-viewer .manual-title {
+      font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1a237e;
+    }
+    .manual-viewer .manual-meta {
+      font-size: 12px; color: #888; margin-bottom: 16px;
+      padding-bottom: 12px; border-bottom: 1px solid #eee;
+    }
+    .manual-viewer .manual-content {
+      font-size: 14px; line-height: 1.7;
+    }
+    .manual-content h1 { font-size: 20px; margin: 16px 0 8px; color: #1a237e; }
+    .manual-content h2 { font-size: 16px; margin: 14px 0 6px; color: #333; }
+    .manual-content h3 { font-size: 14px; margin: 12px 0 4px; color: #555; }
+    .manual-content ul, .manual-content ol { padding-left: 24px; margin: 6px 0; }
+    .manual-content li { margin: 3px 0; }
+    .manual-content table {
+      border-collapse: collapse; margin: 8px 0; width: 100%;
+    }
+    .manual-content th, .manual-content td {
+      border: 1px solid #ddd; padding: 6px 10px; text-align: left; font-size: 13px;
+    }
+    .manual-content th { background: #f5f5f5; }
+    .manual-content code {
+      background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 13px;
+    }
+    .manual-content pre {
+      background: #263238; color: #eee; padding: 12px; border-radius: 6px;
+      overflow-x: auto; margin: 8px 0;
+    }
+    .manual-content pre code { background: none; color: inherit; }
+
+    /* Q&A Panel */
+    .qa-panel {
+      background: white; border-top: 1px solid #ddd;
+      display: flex; flex-direction: column; height: 250px;
+    }
+    .qa-header {
+      padding: 10px 16px; background: #1a237e; color: white;
+      font-size: 14px; font-weight: 500;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .qa-messages {
+      flex: 1; overflow-y: auto; padding: 12px 16px;
+    }
+    .qa-msg {
+      margin-bottom: 10px; padding: 10px 14px; border-radius: 8px;
+      font-size: 13px; line-height: 1.6; max-width: 85%;
+    }
+    .qa-msg.user { background: #e8eaf6; margin-left: auto; text-align: right; }
+    .qa-msg.ai { background: #f5f5f5; }
+    .qa-msg.system { background: #fff3e0; color: #e65100; text-align: center; max-width: 100%; font-size: 12px; }
+    .qa-input {
+      display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid #eee;
+    }
+    .qa-input input {
+      flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+      font-size: 13px; outline: none;
+    }
+    .qa-input input:focus { border-color: #1a237e; }
+    .loading { opacity: 0.6; pointer-events: none; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar { width: 220px; }
+      .manual-list { width: 40%; }
+      .manual-viewer { width: 60%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>휴텍씨 메뉴얼 검색 시스템</h1>
+    <div class="subtitle">MetaTrans Manual Search & AI Q&A</div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Sidebar Filters -->
+  <div class="sidebar">
+    <h3>홈페이지 필터</h3>
+    <div class="filter-group">
+      <label>대분류</label>
+      <select id="hp-large" onchange="onFilterChange('homepage')">
+        <option value="">전체</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>중분류</label>
+      <select id="hp-medium" onchange="onFilterChange('homepage')">
+        <option value="">전체</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>소분류</label>
+      <select id="hp-small" onchange="onFilterChange('homepage')">
+        <option value="">전체</option>
+      </select>
+    </div>
+
+    <h3>부서 필터</h3>
+    <div class="filter-group">
+      <label>대분류</label>
+      <select id="dept-large" onchange="onFilterChange('department')">
+        <option value="">전체</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>중분류</label>
+      <select id="dept-medium" onchange="onFilterChange('department')">
+        <option value="">전체</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>소분류</label>
+      <select id="dept-small" onchange="onFilterChange('department')">
+        <option value="">전체</option>
+      </select>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-secondary" onclick="resetFilters()" style="width:100%">필터 초기화</button>
+    </div>
+  </div>
+
+  <!-- Main Area -->
+  <div class="main">
+    <!-- Search -->
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="업무를 설명해보세요 (예: AITe 시험 준비, 예산 정산 방법)" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="btn btn-primary" onclick="doSearch()">검색</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Manual List -->
+      <div class="manual-list">
+        <div class="header-row">
+          <span>대분류</span>
+          <span>중분류</span>
+          <span>제목 / 세부내용</span>
+        </div>
+        <div id="manual-list-body"></div>
+      </div>
+
+      <!-- Manual Viewer -->
+      <div class="manual-viewer">
+        <div class="placeholder" id="viewer-placeholder">
+          왼쪽 목록에서 메뉴얼을 선택하세요
+        </div>
+        <div id="viewer-content" style="display:none">
+          <div class="manual-title" id="viewer-title"></div>
+          <div class="manual-meta" id="viewer-meta"></div>
+          <div class="manual-content" id="viewer-body"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q&A Panel -->
+    <div class="qa-panel">
+      <div class="qa-header">
+        <span>AI Q&A (메뉴얼 기반 질답)</span>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:white" onclick="clearQA()">대화 초기화</button>
+      </div>
+      <div class="qa-messages" id="qa-messages">
+        <div class="qa-msg system">메뉴얼을 선택하거나 검색한 뒤 질문하면, 해당 메뉴얼 내용을 기반으로 답변합니다.</div>
+      </div>
+      <div class="qa-input">
+        <input type="text" id="qa-input" placeholder="메뉴얼에 대해 질문하세요..." onkeydown="if(event.key==='Enter')askQuestion()">
+        <button class="btn btn-primary" onclick="askQuestion()">질문</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = '';  // same origin
+  let allManuals = [];
+  let currentManualIds = [];
+  let currentViewManual = null;
+  let allIndex = [];
+
+  // --- Init ---
+  async function init() {
+    // Load all manuals and filters
+    const [filterRes, manualRes] = await Promise.all([
+      fetch(`${API}/api/filters`).then(r => r.json()),
+      fetch(`${API}/api/manuals`).then(r => r.json()),
+    ]);
+
+    allManuals = manualRes.manuals;
+    allIndex = [...allManuals];
+
+    // Populate filter selects
+    populateSelect('hp-large', filterRes.homepage['대']);
+    populateSelect('hp-medium', filterRes.homepage['중']);
+    populateSelect('hp-small', filterRes.homepage['소']);
+    populateSelect('dept-large', filterRes.department['대']);
+    populateSelect('dept-medium', filterRes.department['중']);
+    populateSelect('dept-small', filterRes.department['소']);
+
+    renderManualList(allManuals);
+  }
+
+  function populateSelect(id, values) {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    // Keep first option
+    sel.innerHTML = '<option value="">전체</option>';
+    values.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    sel.value = current;
+  }
+
+  // --- Filters ---
+  async function onFilterChange(type) {
+    const params = new URLSearchParams();
+    const hpL = document.getElementById('hp-large').value;
+    const hpM = document.getElementById('hp-medium').value;
+    const hpS = document.getElementById('hp-small').value;
+    const dL = document.getElementById('dept-large').value;
+    const dM = document.getElementById('dept-medium').value;
+    const dS = document.getElementById('dept-small').value;
+
+    if (hpL) params.set('homepage_large', hpL);
+    if (hpM) params.set('homepage_medium', hpM);
+    if (hpS) params.set('homepage_small', hpS);
+    if (dL) params.set('dept_large', dL);
+    if (dM) params.set('dept_medium', dM);
+    if (dS) params.set('dept_small', dS);
+
+    const res = await fetch(`${API}/api/manuals?${params}`).then(r => r.json());
+    allManuals = res.manuals;
+    renderManualList(allManuals);
+
+    // Update dependent filters
+    updateDependentFilters();
+  }
+
+  function updateDependentFilters() {
+    // Update available options based on current results
+    const sets = {
+      hp: { '대': new Set(), '중': new Set(), '소': new Set() },
+      dept: { '대': new Set(), '중': new Set(), '소': new Set() },
+    };
+    allManuals.forEach(m => {
+      ['대','중','소'].forEach(l => {
+        sets.hp[l].add(m.homepage[l]);
+        sets.dept[l].add(m.department[l]);
+      });
+    });
+
+    // Only update dropdowns that aren't actively selected
+    if (!document.getElementById('hp-medium').value)
+      populateSelect('hp-medium', [...sets.hp['중']].sort());
+    if (!document.getElementById('hp-small').value)
+      populateSelect('hp-small', [...sets.hp['소']].sort());
+    if (!document.getElementById('dept-medium').value)
+      populateSelect('dept-medium', [...sets.dept['중']].sort());
+    if (!document.getElementById('dept-small').value)
+      populateSelect('dept-small', [...sets.dept['소']].sort());
+  }
+
+  function resetFilters() {
+    ['hp-large','hp-medium','hp-small','dept-large','dept-medium','dept-small'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    onFilterChange();
+  }
+
+  // --- Search ---
+  async function doSearch() {
+    const query = document.getElementById('search-input').value.trim();
+    if (!query) { onFilterChange(); return; }
+
+    const res = await fetch(`${API}/api/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    }).then(r => r.json());
+
+    allManuals = res.manuals;
+    renderManualList(allManuals);
+  }
+
+  // --- Render Manual List ---
+  function renderManualList(manuals) {
+    const body = document.getElementById('manual-list-body');
+    currentManualIds = manuals.map(m => m.id);
+
+    if (manuals.length === 0) {
+      body.innerHTML = '<div style="padding:24px;text-align:center;color:#999">검색 결과가 없습니다</div>';
+      return;
+    }
+
+    body.innerHTML = manuals.map(m => `
+      <div class="manual-item ${currentViewManual === m.id ? 'active' : ''}" onclick="viewManual('${m.id}')">
+        <span class="cat-large">${m.category['대']}</span>
+        <span class="cat-medium">${m.category['중']}</span>
+        <span>
+          <div class="cat-detail">${m.title}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${m.detail}</div>
+          <div style="margin-top:3px">${m.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+        </span>
+      </div>
+    `).join('');
+  }
+
+  // --- View Manual ---
+  async function viewManual(id) {
+    currentViewManual = id;
+    renderManualList(allManuals);
+
+    const res = await fetch(`${API}/api/manuals/${id}`).then(r => r.json());
+
+    document.getElementById('viewer-placeholder').style.display = 'none';
+    document.getElementById('viewer-content').style.display = 'block';
+    document.getElementById('viewer-title').textContent = res.title;
+    document.getElementById('viewer-meta').innerHTML = `
+      홈페이지: ${res.homepage['대']} > ${res.homepage['중']} > ${res.homepage['소']}<br>
+      부서: ${res.department['대']} > ${res.department['중']} > ${res.department['소']}<br>
+      분류: ${res.category['대']} > ${res.category['중']}
+    `;
+    document.getElementById('viewer-body').innerHTML = markdownToHtml(res.content);
+  }
+
+  // --- Simple Markdown to HTML ---
+  function markdownToHtml(md) {
+    let html = md;
+    // Code blocks
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // Bold
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Tables
+    html = html.replace(/^\|(.+)\|$/gm, (match, content) => {
+      const cells = content.split('|').map(c => c.trim());
+      return '<tr>' + cells.map(c => {
+        if (c.match(/^-+$/)) return null;
+        return `<td>${c}</td>`;
+      }).filter(Boolean).join('') + '</tr>';
+    });
+    html = html.replace(/(<tr>.*<\/tr>\n?)+/g, '<table>$&</table>');
+    html = html.replace(/<td>---+<\/td>/g, '');
+    // Remove separator rows
+    html = html.replace(/<tr>\s*<\/tr>/g, '');
+    // Lists
+    html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    // Paragraphs
+    html = html.replace(/\n\n/g, '<br><br>');
+
+    return html;
+  }
+
+  // --- Q&A ---
+  function addQAMessage(text, type) {
+    const div = document.getElementById('qa-messages');
+    const msg = document.createElement('div');
+    msg.className = `qa-msg ${type}`;
+    msg.innerHTML = text;
+    div.appendChild(msg);
+    div.scrollTop = div.scrollHeight;
+  }
+
+  async function askQuestion() {
+    const input = document.getElementById('qa-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    addQAMessage(question, 'user');
+    input.value = '';
+
+    // Show loading
+    addQAMessage('답변 생성 중...', 'system');
+
+    try {
+      const res = await fetch(`${API}/api/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          manual_ids: currentManualIds.slice(0, 5),
+        }),
+      }).then(r => {
+        if (!r.ok) return r.json().then(e => { throw new Error(e.detail); });
+        return r.json();
+      });
+
+      // Remove loading message
+      const msgs = document.getElementById('qa-messages');
+      msgs.removeChild(msgs.lastChild);
+
+      addQAMessage(res.answer.replace(/\n/g, '<br>'), 'ai');
+    } catch (e) {
+      const msgs = document.getElementById('qa-messages');
+      msgs.removeChild(msgs.lastChild);
+      addQAMessage(`오류: ${e.message}`, 'system');
+    }
+  }
+
+  function clearQA() {
+    const div = document.getElementById('qa-messages');
+    div.innerHTML = '<div class="qa-msg system">메뉴얼을 선택하거나 검색한 뒤 질문하면, 해당 메뉴얼 내용을 기반으로 답변합니다.</div>';
+  }
+
+  // --- Start ---
+  init();
+</script>
+</body>
+</html>
