@@ -283,6 +283,7 @@ async def qa(req: QARequest):
                 return {
                     "answer": "관련 메뉴얼을 찾지 못했습니다. 다른 질문을 시도해주세요.",
                     "sources": [],
+                    "selected_manuals": [],
                 }
             selected_ids = [
                 id.strip() for id in raw_ids.split(",") if id.strip() in manuals_by_id
@@ -292,17 +293,22 @@ async def qa(req: QARequest):
             return {
                 "answer": "관련 메뉴얼을 찾지 못했습니다. 다른 질문을 시도해주세요.",
                 "sources": [],
+                "selected_manuals": [],
             }
 
         # --- Stage 2: 선택된 메뉴얼 본문으로 답변 생성 ---
-        source_titles = []
+        selected_manuals = []
         context_parts = []
         for mid in selected_ids:
             if mid in manuals_by_id:
                 m = manuals_by_id[mid]
                 content = load_manual_content(m["file"])
                 context_parts.append(f"## {m['title']}\n{content}")
-                source_titles.append(m["title"])
+                selected_manuals.append({
+                    "id": m["id"],
+                    "title": m["title"],
+                    "tags": m.get("tags", []),
+                })
 
         context = "\n\n---\n\n".join(context_parts)
 
@@ -329,7 +335,8 @@ async def qa(req: QARequest):
 
         return {
             "answer": response.choices[0].message.content,
-            "sources": source_titles,
+            "sources": [m["title"] for m in selected_manuals],
+            "selected_manuals": selected_manuals,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI 응답 생성 실패: {str(e)}")
