@@ -194,39 +194,136 @@
     .viewer-body pre { background: #1e2130; padding: 14px; border-radius: 6px; overflow-x: auto; margin: 8px 0; }
     .viewer-body pre code { background: none; color: #e4e6ed; }
 
-    /* ── Q&A ── */
-    .qa {
-      border-top: 1px solid var(--border); display: flex; flex-direction: column;
-      height: 200px; background: var(--surface2);
+    /* ── AI Ask Button (in card list) ── */
+    .ai-ask-bar {
+      padding: 16px; text-align: center;
     }
-    .qa-header {
-      padding: 8px 16px; border-bottom: 1px solid var(--border);
-      font-size: 12px; font-weight: 600; color: var(--text-dim);
-      display: flex; justify-content: space-between; align-items: center;
+    .ai-ask-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px; background: var(--accent); color: white; border: none;
+      border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 500;
+      transition: opacity 0.15s;
     }
-    .qa-clear { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 11px; }
-    .qa-clear:hover { color: var(--text); }
-    .qa-messages { flex: 1; overflow-y: auto; padding: 10px 16px; }
-    .qa-msg {
-      margin-bottom: 8px; padding: 8px 12px; border-radius: var(--radius);
-      font-size: 12px; line-height: 1.6; max-width: 80%;
+    .ai-ask-btn:hover { opacity: 0.85; }
+    .ai-ask-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .ai-ask-hint {
+      margin-top: 6px; font-size: 11px; color: var(--text-dim);
     }
-    .qa-msg.user { background: var(--accent-soft); color: var(--accent); margin-left: auto; text-align: right; }
-    .qa-msg.ai { background: var(--surface); color: var(--text); }
-    .qa-msg.system { background: var(--surface); color: var(--text-dim); text-align: center; max-width: 100%; font-size: 11px; }
-    .qa-input-wrap {
-      display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--border);
+    .ai-no-results {
+      padding: 40px 16px; text-align: center;
     }
-    .qa-input-wrap input {
-      flex: 1; padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
-      border-radius: var(--radius); color: var(--text); font-size: 12px; outline: none;
+    .ai-no-results p { color: var(--text-dim); font-size: 13px; margin-bottom: 12px; }
+
+    /* ── AI Modal ── */
+    .ai-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 100; align-items: center; justify-content: center;
     }
-    .qa-input-wrap input:focus { border-color: var(--accent); }
-    .qa-btn {
-      padding: 8px 16px; background: var(--accent); color: white; border: none;
-      border-radius: var(--radius); cursor: pointer; font-size: 12px; font-weight: 500;
+    .ai-modal-overlay.show { display: flex; }
+    .ai-modal {
+      background: var(--surface); border-radius: 12px;
+      width: 90vw; max-width: 780px; max-height: 85vh;
+      display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
     }
-    .qa-btn:hover { opacity: 0.9; }
+    .ai-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .ai-modal-header-label {
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ai-modal-close {
+      background: none; border: none; font-size: 18px; color: var(--text-dim);
+      cursor: pointer; padding: 4px 8px; border-radius: 4px;
+    }
+    .ai-modal-close:hover { background: var(--surface2); color: var(--text); }
+
+    /* Manual selection panel */
+    .ai-manuals-bar {
+      padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface2);
+    }
+    .ai-manuals-label {
+      font-size: 11px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ai-manuals-chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .ai-manual-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px;
+      background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent);
+      cursor: default;
+    }
+    .ai-manual-chip .remove {
+      cursor: pointer; opacity: 0.6; font-size: 13px;
+    }
+    .ai-manual-chip .remove:hover { opacity: 1; }
+    .ai-add-manual-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px;
+      background: transparent; border: 1px dashed var(--border); color: var(--text-dim);
+      cursor: pointer;
+    }
+    .ai-add-manual-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Manual picker dropdown */
+    .ai-manual-picker {
+      display: none; margin-top: 8px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      max-height: 160px; overflow-y: auto;
+    }
+    .ai-manual-picker.show { display: block; }
+    .ai-manual-picker-item {
+      padding: 8px 12px; font-size: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--surface2);
+    }
+    .ai-manual-picker-item:hover { background: var(--accent-soft); }
+    .ai-manual-picker-item.selected { background: var(--accent-soft); color: var(--accent); }
+    .ai-manual-picker-item .tags { font-size: 10px; color: var(--text-dim); }
+
+    .ai-modal-body {
+      flex: 1; overflow-y: auto; padding: 20px;
+    }
+    .ai-modal-answer {
+      font-size: 14px; line-height: 1.8; color: var(--text);
+    }
+    .ai-modal-loading {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 40px; color: var(--text-dim); font-size: 13px;
+    }
+
+    /* Follow-up input */
+    .ai-modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px;
+    }
+    .ai-followup-input {
+      flex: 1; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 13px; outline: none;
+    }
+    .ai-followup-input:focus { border-color: var(--accent); }
+    .ai-followup-btn {
+      padding: 10px 18px; background: var(--accent); color: white; border: none;
+      border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 500;
+    }
+    .ai-followup-btn:hover { opacity: 0.85; }
+    .ai-followup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Chat messages in modal */
+    .ai-chat-msg {
+      margin-bottom: 16px;
+    }
+    .ai-chat-msg-q {
+      font-size: 13px; font-weight: 600; margin-bottom: 8px;
+      padding: 10px 14px; background: var(--accent-soft); border-radius: var(--radius);
+      color: var(--accent); display: inline-block; max-width: 85%; float: right; clear: both;
+    }
+    .ai-chat-msg-a {
+      font-size: 14px; line-height: 1.8; color: var(--text); clear: both;
+    }
   </style>
 </head>
 <body>
@@ -263,18 +360,28 @@
       </div>
     </div>
 
-    <div class="qa">
-      <div class="qa-header">
-        <span>AI Q&A</span>
-        <button class="qa-clear" onclick="clearQA()">초기화</button>
+  </div>
+</div>
+
+<!-- AI Answer Modal -->
+<div class="ai-modal-overlay" id="ai-modal" onclick="if(event.target===this)closeAiModal()">
+  <div class="ai-modal">
+    <div class="ai-modal-header">
+      <span class="ai-modal-header-label">AI 답변</span>
+      <button class="ai-modal-close" onclick="closeAiModal()">&times;</button>
+    </div>
+    <div class="ai-manuals-bar" id="ai-manuals-bar">
+      <div class="ai-manuals-label">
+        <span>참고 메뉴얼</span>
+        <span id="ai-manuals-count"></span>
       </div>
-      <div class="qa-messages" id="qa-messages">
-        <div class="qa-msg system">메뉴얼 기반 AI 질답 — 검색 후 질문하세요</div>
-      </div>
-      <div class="qa-input-wrap">
-        <input type="text" id="qa-input" placeholder="질문을 입력하세요..." onkeydown="if(event.key==='Enter')askQuestion()">
-        <button class="qa-btn" onclick="askQuestion()">전송</button>
-      </div>
+      <div class="ai-manuals-chips" id="ai-manuals-chips"></div>
+      <div class="ai-manual-picker" id="ai-manual-picker"></div>
+    </div>
+    <div class="ai-modal-body" id="ai-modal-body"></div>
+    <div class="ai-modal-footer">
+      <input class="ai-followup-input" id="ai-followup-input" placeholder="후속 질문을 입력하세요..." onkeydown="if(event.key==='Enter')askFollowup()">
+      <button class="ai-followup-btn" id="ai-followup-btn" onclick="askFollowup()">전송</button>
     </div>
   </div>
 </div>
@@ -464,6 +571,7 @@ function updateChipStates() {
 function resetFilters() {
   for (const key in activeFilters) delete activeFilters[key];
   document.getElementById('search-input').value = '';
+  lastSearchQuery = '';
   filteredManuals = [...allManuals];
   renderActiveFilters();
   renderList();
@@ -473,7 +581,8 @@ function resetFilters() {
 // ── Search ──
 async function doSearch() {
   const query = document.getElementById('search-input').value.trim();
-  if (!query) { resetFilters(); return; }
+  if (!query) { lastSearchQuery = ''; resetFilters(); return; }
+  lastSearchQuery = query;
   const res = await fetch(`${API}/api/search`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
@@ -489,7 +598,13 @@ function renderList() {
   document.getElementById('results-info').textContent = `${filteredManuals.length}개 결과`;
 
   if (filteredManuals.length === 0) {
-    el.innerHTML = '<div class="empty">결과 없음</div>';
+    el.innerHTML = lastSearchQuery
+      ? `<div class="ai-no-results">
+           <p>검색 결과가 없습니다.</p>
+           <button class="ai-ask-btn" onclick="askAI()">AI에게 물어보기</button>
+           <div class="ai-ask-hint">"${lastSearchQuery}" 에 대해 AI가 메뉴얼을 찾아 답변합니다</div>
+         </div>`
+      : '<div class="empty">결과 없음</div>';
     return;
   }
 
@@ -510,6 +625,15 @@ function renderList() {
       <div class="card-tags">${m.tags.map(t => `<span class="card-tag">${t}</span>`).join('')}</div>
     </div>`;
   }).join('');
+
+  // 검색어가 있을 때만 AI 버튼 표시
+  if (lastSearchQuery) {
+    el.innerHTML += `
+      <div class="ai-ask-bar">
+        <button class="ai-ask-btn" onclick="askAI()">AI에게 질문하기</button>
+        <div class="ai-ask-hint">검색 결과가 부족하다면 AI가 메뉴얼을 찾아 답변합니다</div>
+      </div>`;
+  }
 }
 
 // ── Viewer ──
@@ -571,38 +695,159 @@ function md(s) {
   return s;
 }
 
-// ── Q&A ──
-function addMsg(text, type) {
-  const el = document.getElementById('qa-messages');
-  const d = document.createElement('div');
-  d.className = `qa-msg ${type}`;
-  d.innerHTML = text;
-  el.appendChild(d);
-  el.scrollTop = el.scrollHeight;
+// ── AI (integrated) ──
+let lastSearchQuery = '';
+let aiSelectedManuals = []; // [{id, title, tags}]
+let aiChatHistory = []; // [{role, content}] for display
+let aiIsLoading = false;
+let pickerOpen = false;
+
+function closeAiModal() {
+  document.getElementById('ai-modal').classList.remove('show');
 }
 
-async function askQuestion() {
-  const input = document.getElementById('qa-input');
-  const q = input.value.trim();
-  if (!q) return;
-  addMsg(q, 'user');
-  input.value = '';
-  addMsg('생각 중...', 'system');
-  try {
-    const res = await fetch(`${API}/api/qa`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: q, manual_ids: currentManualIds.slice(0, 5) }),
-    }).then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.detail); }); return r.json(); });
-    document.getElementById('qa-messages').removeChild(document.getElementById('qa-messages').lastChild);
-    addMsg(res.answer.replace(/\n/g, '<br>'), 'ai');
-  } catch (e) {
-    document.getElementById('qa-messages').removeChild(document.getElementById('qa-messages').lastChild);
-    addMsg(`오류: ${e.message}`, 'system');
+function renderManualChips() {
+  const chips = document.getElementById('ai-manuals-chips');
+  const count = document.getElementById('ai-manuals-count');
+  count.textContent = `${aiSelectedManuals.length}개 선택`;
+
+  let html = aiSelectedManuals.map(m =>
+    `<span class="ai-manual-chip">
+      ${m.title}
+      <span class="remove" onclick="removeManual('${m.id}')">&times;</span>
+    </span>`
+  ).join('');
+  html += `<button class="ai-add-manual-btn" onclick="togglePicker()">+ 추가</button>`;
+  chips.innerHTML = html;
+}
+
+function removeManual(id) {
+  aiSelectedManuals = aiSelectedManuals.filter(m => m.id !== id);
+  renderManualChips();
+  renderPicker();
+}
+
+function addManual(id) {
+  const m = allManuals.find(m => m.id === id);
+  if (m && !aiSelectedManuals.find(s => s.id === id)) {
+    aiSelectedManuals.push({ id: m.id, title: m.title, tags: m.tags || [] });
+    renderManualChips();
+    renderPicker();
   }
 }
 
-function clearQA() {
-  document.getElementById('qa-messages').innerHTML = '<div class="qa-msg system">메뉴얼 기반 AI 질답 — 검색 후 질문하세요</div>';
+function togglePicker() {
+  pickerOpen = !pickerOpen;
+  const picker = document.getElementById('ai-manual-picker');
+  picker.classList.toggle('show', pickerOpen);
+  if (pickerOpen) renderPicker();
+}
+
+function renderPicker() {
+  const picker = document.getElementById('ai-manual-picker');
+  const selectedIds = new Set(aiSelectedManuals.map(m => m.id));
+  picker.innerHTML = allManuals.map(m => {
+    const sel = selectedIds.has(m.id);
+    return `<div class="ai-manual-picker-item ${sel ? 'selected' : ''}" onclick="${sel ? `removeManual('${m.id}')` : `addManual('${m.id}')`}">
+      <span>${sel ? '&#10003; ' : ''}${m.title}</span>
+      <span class="tags">${(m.tags || []).slice(0, 3).join(', ')}</span>
+    </div>`;
+  }).join('');
+}
+
+function appendChat(question, answer, isError) {
+  aiChatHistory.push({ q: question, a: answer, isError });
+  renderChat();
+}
+
+function renderChat() {
+  const body = document.getElementById('ai-modal-body');
+  body.innerHTML = aiChatHistory.map(msg =>
+    `<div class="ai-chat-msg">
+      <div class="ai-chat-msg-q">${msg.q}</div>
+      <div class="ai-chat-msg-a" ${msg.isError ? 'style="color:var(--red)"' : ''}>${md(msg.a)}</div>
+    </div>`
+  ).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+function setLoading(loading) {
+  aiIsLoading = loading;
+  document.getElementById('ai-followup-btn').disabled = loading;
+  if (loading) {
+    const body = document.getElementById('ai-modal-body');
+    body.innerHTML += `<div class="ai-chat-msg" id="ai-loading-msg">
+      <div class="ai-chat-msg-q">${lastSearchQuery}</div>
+      <div class="ai-modal-loading">답변을 생성하고 있습니다...</div>
+    </div>`;
+    body.scrollTop = body.scrollHeight;
+  }
+}
+
+async function askAI() {
+  const query = lastSearchQuery || document.getElementById('search-input').value.trim();
+  if (!query) return;
+
+  // Reset chat for new question
+  aiChatHistory = [];
+  aiSelectedManuals = [];
+  pickerOpen = false;
+  document.getElementById('ai-manual-picker').classList.remove('show');
+  renderManualChips();
+
+  const modal = document.getElementById('ai-modal');
+  modal.classList.add('show');
+  setLoading(true);
+
+  try {
+    const res = await fetch(`${API}/api/qa`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: query }),
+    }).then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.detail); }); return r.json(); });
+
+    // Update selected manuals from AI response
+    if (res.selected_manuals) {
+      aiSelectedManuals = res.selected_manuals;
+      renderManualChips();
+    }
+
+    appendChat(query, res.answer, false);
+  } catch (e) {
+    appendChat(query, `오류: ${e.message}`, true);
+  }
+  aiIsLoading = false;
+  document.getElementById('ai-followup-btn').disabled = false;
+}
+
+async function askFollowup() {
+  if (aiIsLoading) return;
+  const input = document.getElementById('ai-followup-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  lastSearchQuery = q;
+
+  setLoading(true);
+
+  try {
+    const manualIds = aiSelectedManuals.map(m => m.id);
+    const res = await fetch(`${API}/api/qa`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q, manual_ids: manualIds }),
+    }).then(r => { if (!r.ok) return r.json().then(e => { throw new Error(e.detail); }); return r.json(); });
+
+    // Update manuals if AI returned new selection (when no manual_ids were sent)
+    if (res.selected_manuals && res.selected_manuals.length > 0 && manualIds.length === 0) {
+      aiSelectedManuals = res.selected_manuals;
+      renderManualChips();
+    }
+
+    appendChat(q, res.answer, false);
+  } catch (e) {
+    appendChat(q, `오류: ${e.message}`, true);
+  }
+  aiIsLoading = false;
+  document.getElementById('ai-followup-btn').disabled = false;
 }
 
 init();
